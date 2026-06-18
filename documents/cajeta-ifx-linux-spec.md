@@ -69,3 +69,12 @@ must ship **both** windowing stacks (Wayland + X11) and **runtime-detect** the a
 - xdg-shell: https://wayland.app/protocols/xdg-shell · SDL Wayland policy: https://wiki.libsdl.org/SDL3/README-wayland
 - `VK_KHR_wayland_surface`: https://registry.khronos.org/vulkan/specs/latest/man/html/VK_KHR_wayland_surface.html
 - evdev/gamepad: https://wiki.archlinux.org/title/Gamepad · PipeWire: https://wiki.archlinux.org/title/PipeWire
+
+---
+
+## Appendix B — Interop mechanism (direct C FFI + dlopen)
+**No shim, no JNI.** libwayland-client, libxcb, xkbcommon, libpipewire-0.3, libpulse, libasound,
+libinput, libevdev, libudev are all clean C ABIs bound through Cajeta `@Native`. Runtime backend
+selection (Wayland vs X11; PipeWire→Pulse→ALSA) uses **`dlopen`/`dlsym`** so the binary only requires
+the libs actually present. Wayland listeners and evdev reads are C callbacks/fds Cajeta drives. Like
+Windows, the interop work is binding headers + the runtime probe, not bridging a language.
