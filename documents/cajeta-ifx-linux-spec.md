@@ -37,3 +37,35 @@ overrides). Umbrella design: the cajeta repo's `documents/cajeta-gfx/cajeta-gfx-
   §9.4 binding model).
 - Contract: `cajeta.ifx` — `Backend` / `WindowBackend` / `AudioBackend` / `InputBackend`.
 - Selector: the `cajeta-ifx-backend` melt (target → backend).
+
+---
+
+## Appendix A — Vendor SDK details (2025-2026 research)
+
+### Binding: pure C-ABI FFI (no shim, no JNI) — but TWO stacks each domain
+All libs are clean C ABIs. The defining trait: **Linux has no single blessed API** — the backend
+must ship **both** windowing stacks (Wayland + X11) and **runtime-detect** the audio server.
+
+### SDK reference
+| Domain | Modern (libs/protocols) | Legacy / fallback | Deprecated | Notes |
+|---|---|---|---|---|
+| Window | **Wayland** `libwayland-client` + **xdg-shell** (`xdg_wm_base`/`xdg_surface`/`xdg_toplevel`); decorations via xdg-decoration / `libdecor`; FPS mouse via `zwp_relative_pointer` + `zwp_pointer_constraints` | **X11 via libxcb** (`xcb/xcb.h`) | Xlib (use xcb) | Must support **both**; prefer Wayland when compositor advertises it |
+| Surface | `VK_KHR_wayland_surface` (`vkCreateWaylandSurfaceKHR`) | `VK_KHR_xcb_surface` / `VK_KHR_xlib_surface` | — | enable the ext matching the chosen backend |
+| Input (kbd/mouse) | compositor events: `wl_keyboard`/`wl_pointer`/`wl_touch` (+ `libxkbcommon`); X11 via XCB events | — | — | `libinput` is compositor-side, not a client API |
+| Gamepad | **evdev** (`/dev/input/event*`, `libevdev`) + **libudev** (hotplug); rumble via evdev FF ioctls (`EVIOCSFF`) | SDL3 gamepad DB for mappings | legacy `js*` (`linux/joystick.h`) | needs **seat / udev-ACL** access |
+| Audio | **PipeWire** `libpipewire-0.3` (low-latency, capture) | **libpulse**, then **ALSA** `libasound` | — | **runtime-detect** server; PipeWire exposes Pulse/JACK/ALSA compat |
+
+### Capability support & gaps (vs spec §9.7) — the hard ones
+- **No programmatic window positioning on Wayland** → no-op; compositor owns placement.
+- **No cursor warp on Wayland** → use **pointer-lock + relative motion** (the portable primitive).
+- **Client-side decorations** (GNOME/Mutter ignore server-side) → be ready to self-draw / use `libdecor`.
+- **evdev needs seat/udev-ACL permission** → may see no gamepads in sandboxes/containers; report, fall back.
+- **Runtime backend selection mandatory** for BOTH windowing (Wayland vs X11) and audio
+  (PipeWire→Pulse→ALSA) — this is exactly the `ifx` registry+probe pattern, one level down.
+- **Supported:** rumble (evdev FF), low-latency audio (PipeWire quantum / ALSA period), capture
+  (PipeWire + portal). Loopback/system-output capture via PipeWire+portal (partial). No exclusive HDR story.
+
+### References
+- xdg-shell: https://wayland.app/protocols/xdg-shell · SDL Wayland policy: https://wiki.libsdl.org/SDL3/README-wayland
+- `VK_KHR_wayland_surface`: https://registry.khronos.org/vulkan/specs/latest/man/html/VK_KHR_wayland_surface.html
+- evdev/gamepad: https://wiki.archlinux.org/title/Gamepad · PipeWire: https://wiki.archlinux.org/title/PipeWire

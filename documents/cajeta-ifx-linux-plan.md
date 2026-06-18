@@ -51,3 +51,30 @@ Linux window creation via Wayland (primary) + X11/XCB (fallback), producing the 
 - Gated on the stdlib `cajeta.ifx` contract landing (`runtime/src/cajeta/ifx/`).
 - The Surface/WSI hand-off is gated on the gfx swapchain (`cajeta.gpu.gfx`, spec Part GP-1 §4.2).
 - Versioned independently of the other backends (own Linux API cadence).
+
+---
+
+## Appendix A — Binding & capability-gap work (from vendor research)
+
+### 5. Binding (pure C FFI, dual-stack)
+   **TDD**
+   a. [ ] Runtime probe selects Wayland when the compositor advertises it, else X11 (env override).
+   b. [ ] Audio probe selects PipeWire → PulseAudio → ALSA.
+
+   **Deliverables**
+   a. [ ] **Both** windowing backends: Wayland (`libwayland-client` + xdg-shell) **and** X11 (libxcb).
+   b. [ ] Audio multi-backend (libpipewire-0.3 / libpulse / libasound) with runtime detection.
+   c. [ ] evdev + libudev gamepad (hotplug, rumble via FF ioctls); seat/udev-ACL permission handling.
+
+   **Acceptance Criteria**
+   a. [ ] One binary runs on Wayland and X11 sessions and on PipeWire/Pulse/ALSA hosts.
+
+### 6. Capability gaps & fallbacks (vs spec §9.7)
+   **Deliverables**
+   a. [ ] Wayland: **no window positioning** (no-op), **no cursor warp** → pointer-lock + relative
+      motion; client-side decorations (self-draw / `libdecor`).
+   b. [ ] `supports()` reflects the active stack (e.g. positioning false on Wayland, true on X11).
+   c. [ ] gamepad-absent (seat/ACL denied in sandboxes) reported gracefully, not a crash.
+
+   **Acceptance Criteria**
+   a. [ ] FPS mouse-look works via pointer-lock on Wayland; no assumption of warp/positioning.
