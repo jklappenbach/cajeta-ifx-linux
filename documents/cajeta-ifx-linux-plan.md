@@ -58,7 +58,7 @@ Linux window creation via Wayland (primary) + X11/XCB (fallback), producing the 
 
 ### 5. Binding (pure C FFI, dual-stack)
    **TDD**
-   a. [ ] Runtime probe selects Wayland when the compositor advertises it, else X11 (env override).
+   a. [ ] Runtime probe selects Wayland by default (SDL3 policy), else X11 (env override).
    b. [ ] Audio probe selects PipeWire → PulseAudio → ALSA.
 
    **Deliverables**

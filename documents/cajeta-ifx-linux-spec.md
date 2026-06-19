@@ -49,7 +49,7 @@ must ship **both** windowing stacks (Wayland + X11) and **runtime-detect** the a
 ### SDK reference
 | Domain | Modern (libs/protocols) | Legacy / fallback | Deprecated | Notes |
 |---|---|---|---|---|
-| Window | **Wayland** `libwayland-client` + **xdg-shell** (`xdg_wm_base`/`xdg_surface`/`xdg_toplevel`); decorations via xdg-decoration / `libdecor`; FPS mouse via `zwp_relative_pointer` + `zwp_pointer_constraints` | **X11 via libxcb** (`xcb/xcb.h`) | Xlib (use xcb) | Must support **both**; prefer Wayland when compositor advertises it |
+| Window | **Wayland** `libwayland-client` + **xdg-shell** (`xdg_wm_base`/`xdg_surface`/`xdg_toplevel`); decorations via xdg-decoration / `libdecor`; FPS mouse via `zwp_relative_pointer` + `zwp_pointer_constraints` | **X11 via libxcb** (`xcb/xcb.h`) | Xlib (use xcb) | Must support **both**; SDL3 favors Wayland over X11 by default; runtime-probe both |
 | Surface | `VK_KHR_wayland_surface` (`vkCreateWaylandSurfaceKHR`) | `VK_KHR_xcb_surface` / `VK_KHR_xlib_surface` | — | enable the ext matching the chosen backend |
 | Input (kbd/mouse) | compositor events: `wl_keyboard`/`wl_pointer`/`wl_touch` (+ `libxkbcommon`); X11 via XCB events | — | — | `libinput` is compositor-side, not a client API |
 | Gamepad | **evdev** (`/dev/input/event*`, `libevdev`) + **libudev** (hotplug); rumble via evdev FF ioctls (`EVIOCSFF`) | SDL3 gamepad DB for mappings | legacy `js*` (`linux/joystick.h`) | needs **seat / udev-ACL** access |
